@@ -62,6 +62,11 @@ canvas{display:block;margin:0 auto;border-radius:8px;border:0.5px solid var(--bd
 .jbtn:active{opacity:.8;transform:scale(.97)}
 .rc{display:inline-flex;align-items:center;justify-content:center;width:88px;height:88px;border-radius:50%;margin-bottom:10px}
 .save-tip{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;background:#E1F5EE;color:#085041;margin-bottom:.5rem}
+
+@keyframes badgePop{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+@keyframes badgeSpin{0%{transform:rotate(-20deg) scale(.5);opacity:0}100%{transform:rotate(0) scale(1);opacity:1}}
+@keyframes badgeShine{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 6px rgba(83,74,183,.2)}}
+.badge-earned{animation:badgeShine 2s ease infinite}
 </style>
 </head>
 <body>
@@ -71,6 +76,95 @@ canvas{display:block;margin:0 auto;border-radius:8px;border:0.5px solid var(--bd
 </div>
 <div id="app"></div>
 <script>
+
+const BADGE_GROUPS=[
+  {name:"二十四节气",desc:"感受四季流转",color:"#1D9E75",bg:"#E1F5EE",dark:"#085041",
+   badges:[
+    {id:"lc",n:"立春",sym:"春",tip:"春季始"},
+    {id:"ys",n:"雨水",sym:"雨",tip:"春雨来"},
+    {id:"jz",n:"惊蛰",sym:"雷",tip:"万虫醒"},
+    {id:"cf",n:"春分",sym:"分",tip:"昼夜平"},
+    {id:"qm",n:"清明",sym:"清",tip:"踏青时"},
+    {id:"gy",n:"谷雨",sym:"谷",tip:"播种忙"},
+    {id:"lx",n:"立夏",sym:"夏",tip:"夏季始"},
+    {id:"xm",n:"小满",sym:"满",tip:"麦渐熟"},
+    {id:"mz",n:"芒种",sym:"芒",tip:"收与种"},
+    {id:"xz",n:"夏至",sym:"至",tip:"日最长"},
+    {id:"xs",n:"小暑",sym:"暑",tip:"渐炎热"},
+    {id:"ds",n:"大暑",sym:"热",tip:"最酷热"},
+    {id:"lq",n:"立秋",sym:"秋",tip:"秋季始"},
+    {id:"cs",n:"处暑",sym:"处",tip:"暑将尽"},
+    {id:"bl",n:"白露",sym:"露",tip:"露水生"},
+    {id:"qf",n:"秋分",sym:"秋",tip:"金风至"},
+    {id:"hl",n:"寒露",sym:"寒",tip:"露更凉"},
+    {id:"sj",n:"霜降",sym:"霜",tip:"初结霜"},
+    {id:"ld",n:"立冬",sym:"冬",tip:"冬季始"},
+    {id:"xx",n:"小雪",sym:"雪",tip:"始降雪"},
+    {id:"dx",n:"大雪",sym:"大",tip:"雪纷飞"},
+    {id:"dz",n:"冬至",sym:"至",tip:"日最短"},
+    {id:"xh",n:"小寒",sym:"小",tip:"天渐寒"},
+    {id:"dh",n:"大寒",sym:"大",tip:"最严寒"},
+   ]},
+  {name:"天干",desc:"十天干，循环往复",color:"#BA7517",bg:"#FAEEDA",dark:"#412402",
+   badges:[
+    {id:"jia",n:"甲",sym:"甲",tip:"万物始萌"},
+    {id:"yi",n:"乙",sym:"乙",tip:"草木抽芽"},
+    {id:"bing",n:"丙",sym:"丙",tip:"阳气炽盛"},
+    {id:"ding",n:"丁",sym:"丁",tip:"壮盛之极"},
+    {id:"wu",n:"戊",sym:"戊",tip:"丰茂繁盛"},
+    {id:"ji",n:"己",sym:"己",tip:"万物成熟"},
+    {id:"geng",n:"庚",sym:"庚",tip:"秋收更替"},
+    {id:"xin",n:"辛",sym:"辛",tip:"万物新生"},
+    {id:"ren",n:"壬",sym:"壬",tip:"阴阳孕育"},
+    {id:"gui",n:"癸",sym:"癸",tip:"生命轮回"},
+   ]},
+  {name:"地支",desc:"十二地支，生肖相配",color:"#534AB7",bg:"#EEEDFE",dark:"#26215C",
+   badges:[
+    {id:"zi",n:"子",sym:"鼠",tip:"子时生机"},
+    {id:"chou",n:"丑",sym:"牛",tip:"丑时勤耕"},
+    {id:"yin",n:"寅",sym:"虎",tip:"寅时威猛"},
+    {id:"mao",n:"卯",sym:"兔",tip:"卯时温柔"},
+    {id:"chen",n:"辰",sym:"龙",tip:"辰时腾飞"},
+    {id:"si",n:"巳",sym:"蛇",tip:"巳时灵动"},
+    {id:"wu2",n:"午",sym:"马",tip:"午时奔腾"},
+    {id:"wei",n:"未",sym:"羊",tip:"未时祥和"},
+    {id:"shen",n:"申",sym:"猴",tip:"申时机敏"},
+    {id:"you",n:"酉",sym:"鸡",tip:"酉时金鸣"},
+    {id:"xu",n:"戌",sym:"狗",tip:"戌时忠诚"},
+    {id:"hai",n:"亥",sym:"猪",tip:"亥时圆满"},
+   ]},
+  {name:"八卦",desc:"乾坤既定，八卦生焉",color:"#185FA5",bg:"#E6F1FB",dark:"#042C53",
+   badges:[
+    {id:"qian",n:"乾",sym:"☰",tip:"天，刚健"},
+    {id:"kun",n:"坤",sym:"☷",tip:"地，柔顺"},
+    {id:"zhen",n:"震",sym:"☳",tip:"雷，动势"},
+    {id:"xun",n:"巽",sym:"☴",tip:"风，顺入"},
+    {id:"kan",n:"坎",sym:"☵",tip:"水，险陷"},
+    {id:"li",n:"离",sym:"☲",tip:"火，光明"},
+    {id:"gen",n:"艮",sym:"☶",tip:"山，静止"},
+    {id:"dui",n:"兑",sym:"☱",tip:"泽，喜悦"},
+   ]},
+  {name:"上古神兽",desc:"神兽护卫，福泽绵长",color:"#993C1D",bg:"#FAECE7",dark:"#4A1B0C",
+   badges:[
+    {id:"ql",n:"青龙",sym:"龙",tip:"东方之神"},
+    {id:"bh",n:"白虎",sym:"虎",tip:"西方之神"},
+    {id:"zq",n:"朱雀",sym:"雀",tip:"南方之神"},
+    {id:"xw",n:"玄武",sym:"武",tip:"北方之神"},
+    {id:"qlin",n:"麒麟",sym:"麟",tip:"仁兽之王"},
+    {id:"fh",n:"凤凰",sym:"凤",tip:"百鸟之王"},
+    {id:"pixiu",n:"貔貅",sym:"貅",tip:"招财辟邪"},
+    {id:"tt",n:"饕餮",sym:"饕",tip:"古之神兽"},
+    {id:"xzhi",n:"獬豸",sym:"豸",tip:"正义之兽"},
+    {id:"zhlong",n:"烛龙",sym:"烛",tip:"照耀万里"},
+    {id:"qqi",n:"穷奇",sym:"奇",tip:"上古异兽"},
+    {id:"tw",n:"梼杌",sym:"杌",tip:"凶兽之名"},
+   ]},
+];
+
+// 展平所有勋章
+const ALL_BADGES=[];
+BADGE_GROUPS.forEach((g,gi)=>g.badges.forEach((b,bi)=>ALL_BADGES.push({...b,gi,bi,group:g.name})));
+
 const GRADES=[
   {g:"一年级",vols:[
     {v:"上册",units:[
@@ -199,14 +293,15 @@ function flatten(gIdx,vIdx,uIdx){
 }
 
 /* ══ localStorage ══ */
-const SK='hxw_srs_v2',WK='hxw_wrong_v2';
-function save(){try{localStorage.setItem(SK,JSON.stringify(S.srs));localStorage.setItem(WK,JSON.stringify(S.wrongList));}catch(e){}}
-function load(){try{const s=localStorage.getItem(SK),w=localStorage.getItem(WK);if(s)S.srs=JSON.parse(s);if(w)S.wrongList=JSON.parse(w);}catch(e){}}
+const SK='hxw_srs_v2',WK='hxw_wrong_v2',BK='hxw_badges_v1';
+function save(){try{localStorage.setItem(SK,JSON.stringify(S.srs));localStorage.setItem(WK,JSON.stringify(S.wrongList));localStorage.setItem(BK,JSON.stringify({earned:S.earnedBadges,units:S.perfectUnits}));}catch(e){}}
+function load(){try{const s=localStorage.getItem(SK),w=localStorage.getItem(WK),b=localStorage.getItem(BK);if(s)S.srs=JSON.parse(s);if(w)S.wrongList=JSON.parse(w);if(b){const bd=JSON.parse(b);S.earnedBadges=bd.earned||[];S.perfectUnits=bd.units||{};}}catch(e){}}
 
 /* ══ 状态 ══ */
 let S={screen:'home',phase:'write',gIdx:null,vIdx:null,uIdx:null,
   list:[],idx:0,wrongList:[],session:{ok:0,fail:0},grade:null,
-  hasStrokes:false,capturedImg:null,srs:{}};
+  hasStrokes:false,capturedImg:null,srs:{},
+  earnedBadges:[],perfectUnits:{},newBadge:null};
 
 function cd(c){if(!S.srs[c])S.srs[c]={stab:null,reps:0};return S.srs[c];}
 function gr(c,r){const d=cd(c),ns=Math.max(.5,(d.stab||[null,.4,.6,2.4,5.8][r]||1)*[null,.2,.7,1.3,2.0][r]);d.stab=ns;d.reps++;save();}
@@ -254,7 +349,7 @@ function snap(){const cv=document.getElementById("hw-canvas");if(!cv)return null
 
 function doGrade(r){
   const c=S.list[S.idx];gr(c.c,r);
-  if(r>=3){S.session.ok++;beep(true);}else{S.session.fail++;beep(false);if(!S.wrongList.find(w=>w.c===c.c)){S.wrongList.push({...c});save();}}
+  if(r>=3){S.session.ok++;beep(true);sayPhrase(OK_PHRASES,true);}else{S.session.fail++;beep(false);sayPhrase(ERR_PHRASES,false);if(!S.wrongList.find(w=>w.c===c.c)){S.wrongList.push({...c});save();}}
   S.grade=r;S.phase="result";render();
 }
 
@@ -384,14 +479,155 @@ function Practice(){
       const nb=mk("button","btn btn-p","下一个汉字 →");nb.onclick=()=>{S.idx++;S.phase="write";S.grade=null;S.hasStrokes=false;S.capturedImg=null;render();setTimeout(()=>speak(S.list[S.idx]),300);};wrap.appendChild(nb);
     }else{
       const done=div("card");done.style.cssText="text-align:center;border-color:#1D9E75;background:#E1F5EE";
-      done.innerHTML=`<div style="font-size:17px;font-weight:500;color:#1D9E75;margin-bottom:6px">练习完成！</div><div style="font-size:14px;color:var(--t2);margin-bottom:12px">写对 ${S.session.ok} 个 · 加入生词库 ${S.session.fail} 个</div>`;
+      const allPerfect=S.session.fail===0&&S.uIdx!==null;
+      done.innerHTML=`<div style="font-size:17px;font-weight:500;color:#1D9E75;margin-bottom:6px">${allPerfect?'🏅 全对！勋章已解锁！':'练习完成！'}</div><div style="font-size:14px;color:var(--t2);margin-bottom:12px">写对 ${S.session.ok} 个 · 加入生词库 ${S.session.fail} 个</div>`;
       const hb=mk("button","btn btn-p","返回首页");hb.style.cssText="display:inline-block;width:auto;padding:10px 28px";hb.onclick=()=>{S.screen="home";render();};done.appendChild(hb);wrap.appendChild(done);
     }
   }
   return wrap;
 }
 
-function render(){const app=document.getElementById("app");if(!app)return;app.innerHTML="";app.appendChild(S.screen==="home"?Home():Practice());}
+
+
+const OK_PHRASES=["可以可以","不错呦","再来一个","六六六","还能来嘛","我开始看好你了","你不是一般人","你太牛了","你是我的神","我开始崇拜你了","大圣","请受我一拜"];
+let okPhraseIdx=0;
+const ERR_PHRASES=["菜要多练"];
+
+function sayPhrase(phrases,sequential){
+  if(!window.speechSynthesis)return;
+  let txt;
+  if(sequential){txt=phrases[okPhraseIdx%phrases.length];okPhraseIdx++;}
+  else{txt=phrases[Math.floor(Math.random()*phrases.length)];}
+  window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(txt);
+  u.lang='zh-CN';u.rate=1.1;u.pitch=1.2;
+  const v=window.speechSynthesis.getVoices().filter(x=>x.lang.startsWith('zh'));
+  if(v.length)u.voice=v[0];
+  setTimeout(()=>window.speechSynthesis.speak(u),380);
+}
+
+function beepBadge(){try{const ctx=ac(),t=ctx.currentTime;[[523,t],[659,t+.08],[784,t+.16],[1047,t+.24],[1319,t+.34],[1568,t+.44]].forEach(([f,w])=>{const o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(.001,w);g.gain.linearRampToValueAtTime(.25,w+.04);g.gain.exponentialRampToValueAtTime(.001,w+.4);o.connect(g);g.connect(ctx.destination);o.start(w);o.stop(w+.45);});}catch(e){}}
+
+function checkBadge(){
+  if(S.uIdx===null)return; // 只有练习特定单元才发勋章
+  if(S.session.fail>0)return; // 必须全对
+  const key=S.gIdx+'_'+S.vIdx+'_'+S.uIdx;
+  if(S.perfectUnits[key])return; // 已经领过了
+  S.perfectUnits[key]=true;
+  const idx=S.earnedBadges.length;
+  if(idx>=ALL_BADGES.length)return; // 全部解锁完了
+  const badge=ALL_BADGES[idx];
+  S.earnedBadges.push(badge.id);
+  S.newBadge=badge;
+  save();
+  beepBadge();
+  setTimeout(()=>sayPhrase(OK_PHRASES),600);
+}
+
+
+function launchConfetti(){
+  const canvas=document.createElement('canvas');
+  canvas.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999';
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  document.body.appendChild(canvas);
+  const ctx=canvas.getContext('2d');
+  const colors=['#534AB7','#1D9E75','#E24B4A','#BA7517','#378ADD','#D4537E','#EF9F27','#5DCAA5'];
+  const pieces=[];
+  for(let i=0;i<120;i++){
+    pieces.push({
+      x:Math.random()*canvas.width,
+      y:Math.random()*canvas.height-canvas.height,
+      w:Math.random()*10+5,h:Math.random()*14+6,
+      color:colors[Math.floor(Math.random()*colors.length)],
+      rot:Math.random()*360,
+      vx:(Math.random()-0.5)*4,
+      vy:Math.random()*5+3,
+      vr:(Math.random()-0.5)*8,
+      op:1
+    });
+  }
+  let frame=0;
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    pieces.forEach(p=>{
+      ctx.save();
+      ctx.globalAlpha=p.op;
+      ctx.translate(p.x+p.w/2,p.y+p.h/2);
+      ctx.rotate(p.rot*Math.PI/180);
+      ctx.fillStyle=p.color;
+      ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+      ctx.restore();
+      p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;
+      if(frame>80)p.op=Math.max(0,p.op-0.018);
+    });
+    frame++;
+    if(frame<140)requestAnimationFrame(draw);
+    else canvas.remove();
+  }
+  draw();
+}
+
+function BadgePopup(){
+  const b=S.newBadge;
+  const g=BADGE_GROUPS[b.gi];
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);z-index:999;display:flex;align-items:center;justify-content:center;';
+  const box=document.createElement('div');
+  box.style.cssText='background:var(--bg);border-radius:20px;padding:2rem 1.5rem;text-align:center;width:min(320px,88vw);animation:badgePop .5s cubic-bezier(.36,.07,.19,.97) both;';
+  const sparkles='✦ 新勋章解锁 ✦';
+  box.innerHTML=`
+    <div style="font-size:12px;letter-spacing:3px;color:${g.color};margin-bottom:1rem">${sparkles}</div>
+    <div style="width:96px;height:96px;border-radius:50%;background:${g.bg};border:4px solid ${g.color};display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:40px;animation:badgeSpin .6s ease both;">${b.sym}</div>
+    <div style="font-size:22px;font-weight:500;color:var(--t);margin-bottom:4px">${b.n}</div>
+    <div style="font-size:12px;color:${g.color};margin-bottom:4px">${g.name}</div>
+    <div style="font-size:13px;color:var(--t2);margin-bottom:1.5rem">${b.tip}</div>
+    <button onclick="this.closest('div[style*=fixed]').remove();S.newBadge=null;" style="background:${g.color};color:#fff;border:none;border-radius:50px;padding:10px 28px;font-size:14px;cursor:pointer;font-family:inherit">太棒了！继续加油</button>
+  `;
+  overlay.appendChild(box);
+  overlay.onclick=e=>{if(e.target===overlay){overlay.remove();S.newBadge=null;}};
+  document.body.appendChild(overlay);
+  setTimeout(launchConfetti,100);
+}
+
+
+function BadgesPage(){
+  const wrap=div('wrap');
+  const nav=div('nav');
+  const back=mk('button','nav-back','← 首页');back.onclick=()=>{S.screen='home';render();};
+  const title=div('');title.style.cssText='font-size:15px;font-weight:500;color:var(--t)';title.textContent='我的勋章';
+  const sp=div('');sp.style.width='60px';
+  nav.appendChild(back);nav.appendChild(title);nav.appendChild(sp);wrap.appendChild(nav);
+
+  const total=ALL_BADGES.length,earned=S.earnedBadges.length;
+  const prog=div('');prog.style.cssText='text-align:center;margin-bottom:1rem';
+  prog.innerHTML=`<span style="font-size:28px;font-weight:500;color:var(--a)">${earned}</span><span style="font-size:14px;color:var(--t2)"> / ${total} 枚</span>`;
+  const pb=div('prog-bar');const pf=div('prog-f');pf.style.width=(earned/total*100)+'%';pb.appendChild(pf);
+  wrap.appendChild(prog);wrap.appendChild(pb);
+
+  BADGE_GROUPS.forEach((g,gi)=>{
+    const gEarned=g.badges.filter(b=>S.earnedBadges.includes(b.id)).length;
+    const sec=div('card');sec.style.cssText='padding:1rem;margin-bottom:.75rem';
+    const gh=div('');gh.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem';
+    const gl=div('');
+    gl.innerHTML=`<div style="font-size:14px;font-weight:500;color:var(--t)">${g.name}</div><div style="font-size:11px;color:${g.color};margin-top:2px">${g.desc}</div>`;
+    const gc=div('');gc.style.cssText=`font-size:11px;color:var(--t2)`;gc.textContent=gEarned+'/'+g.badges.length;
+    gh.appendChild(gl);gh.appendChild(gc);sec.appendChild(gh);
+    const grid=div('');grid.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px';
+    g.badges.forEach(b=>{
+      const isEarned=S.earnedBadges.includes(b.id);
+      const bc=div('');bc.style.cssText=`text-align:center;padding:8px 4px;border-radius:10px;background:${isEarned?g.bg:'var(--bg2)'};border:0.5px solid ${isEarned?g.color:'var(--bd)'};transition:all .2s`;
+      const bsym=div('');bsym.style.cssText=`font-size:24px;margin-bottom:4px;${isEarned?'':'filter:grayscale(1);opacity:.3'}`;bsym.textContent=b.sym;
+      const bname=div('');bname.style.cssText=`font-size:11px;color:${isEarned?g.dark:'var(--t3)'};font-weight:${isEarned?'500':'400'}`;bname.textContent=b.n;
+      if(isEarned){const btip=div('');btip.style.cssText='font-size:9px;color:'+g.color+';margin-top:2px';btip.textContent=b.tip;bc.appendChild(bsym);bc.appendChild(bname);bc.appendChild(btip);}
+      else{bc.appendChild(bsym);bc.appendChild(bname);}
+      grid.appendChild(bc);
+    });
+    sec.appendChild(grid);wrap.appendChild(sec);
+  });
+  return wrap;
+}
+
+function render(){const app=document.getElementById("app");if(!app)return;app.innerHTML="";const pages={home:Home,practice:Practice,badges:BadgesPage};app.appendChild((pages[S.screen]||Home)());}
 load();
 if(window.speechSynthesis){window.speechSynthesis.getVoices();window.speechSynthesis.addEventListener("voiceschanged",()=>window.speechSynthesis.getVoices());}
 render();
